@@ -1,6 +1,8 @@
 package com.fstm.ilisi.project.UsineManager.model.BO;
 
 
+import com.fstm.ilisi.project.UsineManager.service.ModeleService;
+
 import javax.persistence.*;
 import java.io.Serializable;
 

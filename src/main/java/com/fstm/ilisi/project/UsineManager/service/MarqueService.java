@@ -18,8 +18,10 @@ public class MarqueService {
         this.marquerepo = marquerepo;
     }
 
-    public Marque addMarque(Marque marque) {
-
+    public Marque addMarque(Marque marque)
+    {
+        if(marquerepo.existsByDesignation(marque.getDesignation()))
+            return null;
         return marquerepo.save(marque);
     }
 
@@ -31,12 +33,11 @@ public class MarqueService {
         return marquerepo.save(marque);
     }
 
-    public Marque findMarqueById(String id) {
+    public Marque findMarqueById(int id)
+    {
         return marquerepo.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("User by id " + id + " was not found"));
     }
 
-    public void deleteMarque(String id){
-        marquerepo.deleteById(id);
-    }
+    public void deleteMarque(int id){ marquerepo.deleteById(id);}
 }

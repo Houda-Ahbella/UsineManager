@@ -1,13 +1,14 @@
 package com.fstm.ilisi.project.UsineManager.controller;
 import com.fstm.ilisi.project.UsineManager.model.BO.*;
 import com.fstm.ilisi.project.UsineManager.service.*;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellType;
-import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -15,11 +16,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+
+import static org.apache.poi.ss.usermodel.CellType.*;
 
 @RestController
 @RequestMapping("/Usine")
@@ -30,12 +31,16 @@ public class UsineController {
     private final ModeleService modeleservice;
     private final LotService lotService;
     private final VehiculeService vehiculeservice;
-    public UsineController(EmployeeService employeeService, MarqueService marqueservice, ModeleService modeleservice, LotService lotService, VehiculeService vehiculeservice) {
+    private final StepService stepservice;
+    private final ME_Organisation_Service me_orgaservice;
+    public UsineController(EmployeeService employeeService, MarqueService marqueservice, ModeleService modeleservice, LotService lotService, VehiculeService vehiculeservice, StepService stepservice, ME_Organisation_Service me_orgaservice) {
         this.employeeService = employeeService;
         this.marqueservice = marqueservice;
         this.modeleservice = modeleservice;
         this.lotService = lotService;
         this.vehiculeservice = vehiculeservice;
+        this.stepservice = stepservice;
+        this.me_orgaservice = me_orgaservice;
     }
         /***************Partie de selection de toutes ***************/
     @GetMapping("/allemployee")
@@ -57,14 +62,14 @@ public class UsineController {
     }
     // Models of marques
     @GetMapping("/allmodelesOfMarque/{id}")
-    public ResponseEntity<Set<Modele>> getModelsOfMarques (@PathVariable("id") String id) {
+    public ResponseEntity<Set<Modele>> getModelsOfMarques (@PathVariable("id") int id) {
         Marque marque = marqueservice.findMarqueById(id);
         Set<Modele> models =  marque.getModeles();
         return new ResponseEntity<>(models, HttpStatus.OK);
     }
     // Vehicules of Lot
     @GetMapping("/allvehiculesOfLot/{id}")
-    public ResponseEntity<List<Vehicule>> getModelsOfMarques (@PathVariable("id") int id)
+    public ResponseEntity<List<Vehicule>> getvehiculesOfLot(@PathVariable("id") int id)
     {
         Lot lot = lotService.findLotById(id);
         List<Vehicule> OrderVehicules = new ArrayList<>(lot.getVehicules());
@@ -86,6 +91,48 @@ public class UsineController {
         Collections.reverse(lots);
         return new ResponseEntity<>(lots, HttpStatus.OK);
     }
+    // Etapes
+    @GetMapping("/allEtapes")
+    public ResponseEntity<List<Step>> getAlletapes () {
+        List<Step> steps = stepservice.findAllSteps();
+        return new ResponseEntity<>(steps, HttpStatus.OK);
+    }
+    @GetMapping("/allOrga")
+    public ResponseEntity<List<ME_Organisation>> getAllORGA () {
+        List<ME_Organisation> em = me_orgaservice.findAllEtapesMarque();
+        Collections.sort(em, ME_Organisation.ComparatorOrder);
+        Collections.reverse(em);
+        return new ResponseEntity<>(em, HttpStatus.OK);
+    }
+    @GetMapping("/allStepsofmarque/{id}")
+    public ResponseEntity<Set<ME_Organisation>> getAllStepsOfmarque (@PathVariable("id") int id) {
+        Set<ME_Organisation> em = marqueservice.findMarqueById(id).getSteps();
+        return new ResponseEntity<>(em, HttpStatus.OK);
+    }
+
+    @GetMapping("/allEtapesNotINmarque/{id}")
+    public  ResponseEntity<List<Step>> getallEtapesNotINmarque (@PathVariable("id") int id)
+    {
+        List<Step> steps = stepservice.findAllSteps();
+        Set<ME_Organisation> marquestep = marqueservice.findMarqueById(id).getSteps();
+
+
+            for (ME_Organisation ME : marquestep)
+            {
+                for(int i=0 ; i< steps.size() ; i++) {
+                    if (ME.getId().getStepId() == steps.get(i).getId()) {
+                        steps.remove(steps.get(i));
+                    }
+                }
+
+            }
+
+
+
+
+        return new ResponseEntity<>(steps, HttpStatus.OK);
+
+    }
      /*************************Partie de recherche ***********************************/
      //
     @GetMapping("/findemployee/{id}")
@@ -94,13 +141,13 @@ public class UsineController {
         return new ResponseEntity<>(employee, HttpStatus.OK);
     }
     @GetMapping("/findmarque/{id}")
-    public ResponseEntity<Marque> getMarqueById (@PathVariable("id") String id) {
+    public ResponseEntity<Marque> getMarqueById (@PathVariable("id") int id) {
         Marque marque = marqueservice.findMarqueById(id);
         return new ResponseEntity<>(marque, HttpStatus.OK);
     }
     //Modele
     @GetMapping("/findmodele/{id}")
-    public ResponseEntity<Modele> getModeleById (@PathVariable("id") String id) {
+    public ResponseEntity<Modele> getModeleById (@PathVariable("id") int id) {
         Modele modele = modeleservice.findModeleById(id);
         return new ResponseEntity<>(modele, HttpStatus.OK);
     }
@@ -132,15 +179,15 @@ public class UsineController {
     // Modele
     @PostMapping("/addmodele")
     public ResponseEntity<Modele> addModele(@RequestBody Modele modele) {
-        System.out.println(modele);
         Modele newModele = modeleservice.addModele(modele);
+        if(newModele==null) newModele = new Modele();
         return new ResponseEntity<>(newModele, HttpStatus.CREATED);
     }
     // Marque
     @PostMapping("/addmarque")
     public ResponseEntity<Marque> addMarque(@RequestBody Marque marque) {
-        System.out.println(marque);
         Marque newMarque = marqueservice.addMarque(marque);
+        if(newMarque==null) newMarque = new Marque();
         return new ResponseEntity<>(newMarque, HttpStatus.CREATED);
     }
     // Vehicule
@@ -159,16 +206,62 @@ public class UsineController {
         Lot newlot = lotService.addLot(lot);
         return new ResponseEntity<>(newlot, HttpStatus.CREATED);
     }
+    // Ajouter des etapes d'une marque
+    @PostMapping("/addStepINmarque")
+    public ResponseEntity<ME_Organisation> addStepINmarque(@RequestBody ME_Organisation ME) {
+        if(me_orgaservice.exitByOrdre(ME.getOrdre())==true)
+        {
+            ME=new ME_Organisation();
+            ME.setOrdre(-2);
+            return new ResponseEntity<>(ME, HttpStatus.CREATED);
+        }
+        else
+        {
+            ME.setMarque(marqueservice.findMarqueById(ME.getId().getMarqueId()));
+            ME.setStep(stepservice.findStepById(ME.getId().getStepId()));
+            ME_Organisation me = me_orgaservice.addEtapeMarque(ME);
+
+            return new ResponseEntity<>(me, HttpStatus.CREATED);
+        }
+
+    }
+    @PostMapping("/addNewStepINmarque")
+    public ResponseEntity<ME_Organisation> addNewStepINmarque(@RequestBody ME_Organisation ME) {
+        if(stepservice.existBydes(ME.getStep().getDes())==true)
+        {
+
+            ME.setOrdre(-1);
+        }
+        else if(me_orgaservice.exitByOrdre(ME.getOrdre()))
+        {
+
+            ME.setOrdre(-2);
+        }
+        else
+        {
+            ME.setMarque(marqueservice.findMarqueById(ME.getId().getMarqueId()));
+            Step step = new Step();
+            step.setDes(ME.getStep().getDes());
+            Step newstep = stepservice.addStep(step);
+            ME.setStep(newstep);
+            ME_Organisation me = me_orgaservice.addEtapeMarque(ME);
+        }
+
+        return new ResponseEntity<>(ME, HttpStatus.CREATED);
+    }
+
     // ajouter lot avec fichier excel
     @PostMapping("/addCompleteLot")
-    public ResponseEntity<Lot>GetCreatelotPage(@RequestBody ExcelReader reader)
-    {
-
+    public ResponseEntity<Lot>GetCreatelotPage(@RequestBody ExcelReader reader) throws IOException {
+    System.out.println("reader" + reader.getExtension());
        Lot l=new Lot();
        Modele m = new Modele();
         Set<Vehicule> vehicules = new HashSet<Vehicule>();
-       readfile(l,m,reader,vehicules);
-       Modele modele=modeleservice.findModeleById(m.getDesignation());
+        reader.readerfile(l,m,vehicules);
+        System.out.println("vehicules "+ vehicules);
+
+      /*
+      Modele modele=modeleservice.findbydes(m.getDesignation());
        DateTimeFormatter formatter =DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm");
        String formattedDayeTime = formatter.format(LocalDateTime.now());
        l.setDate_Entree(formattedDayeTime);
@@ -176,127 +269,107 @@ public class UsineController {
        Lot newlot= lotService.addLot(l);
         l.setVehicules(vehicules);
         l.setModeleLot(modele);
-       for (Vehicule v : l.getVehicules()) vehiculeservice.addVehicule(v);
+      for (Vehicule v : l.getVehicules()) vehiculeservice.addVehicule(v);
        System.out.println(newlot);
-        return new ResponseEntity<>(newlot, HttpStatus.CREATED);
-
-
-
+       */
+        return new ResponseEntity<>(l, HttpStatus.CREATED);
 
     }
-    public void readfile(Lot lot , Modele modele, ExcelReader r,Set<Vehicule> vehicules)
-    {
-        r.ChangeChemin();
-        System.out.println(r.getChemin());
-        File file = new File(r.getChemin());   //creating a new file instance
-        FileInputStream fis = null;   //obtaining bytes from the file
-        try {
-            fis = new FileInputStream(file);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-        //creating Workbook instance that refers to .xlsx file
-
-        try {
-
-
-            XSSFWorkbook wb = new XSSFWorkbook(fis);
-            XSSFSheet sheet = wb.getSheetAt(0);
-            Iterator<Row> itr = sheet.iterator();
-            itr.next();
-            System.out.println("debut ************");
-            for(int i=2;i<6; i++) {
-                Row row = itr.next();
-                Iterator<Cell> cellIterator = row.cellIterator();   //iterating over each column
-                Cell cell = cellIterator.next();
-                System.out.println("debut again ************");
-                if (cell.getCellType() == CellType.STRING) {
-                    System.out.println(cell.getStringCellValue());
-                    if (cell.getStringCellValue().equals("MODELE")) {
-                        cell = cellIterator.next();
-                        if (cell.getCellType() == CellType.STRING)
-                        {
-                            System.out.println(" modele "+cell.getStringCellValue());
-                            modele.setDesignation(cell.getStringCellValue());
-                        }
+        /*
+        Iterator<Row> itr = sheet.iterator();
+        itr.next();
+        System.out.println("debut ************");
+        for(int i=2;i<6; i++) {
+            Row row = itr.next();
+            Iterator<Cell> cellIterator = row.cellIterator();   //iterating over each column
+            Cell cell = cellIterator.next();
+            System.out.println("debut again ************");
+            System.out.println(cell.getStringCellValue());
+            if (cell.getCellType() == CellType.STRING) {
+                System.out.println(cell.getStringCellValue());
+                if (cell.getStringCellValue().equals("MODELE")) {
+                    cell = cellIterator.next();
+                    if (cell.getCellType() == CellType.STRING)
+                    {
+                        System.out.println(" modele "+cell.getStringCellValue());
+                        modele.setDesignation(cell.getStringCellValue());
                     }
-                    else if (cell.getStringCellValue().equals("BATCH NO.")) {
-                        cell = cellIterator.next();
-                        if (cell.getCellType() == CellType.STRING) {
-                            System.out.println(" BATCH NO. "+cell.getStringCellValue());
-                            lot.setNum_bach(cell.getStringCellValue());
-                        }
-                    } else if (cell.getStringCellValue().equals("CONNAISSEMENT")) {
-                        cell = cellIterator.next();
-                        if (cell.getCellType() == CellType.STRING) {
-                            System.out.println(" CONNAISSEMENT "+cell.getStringCellValue());
-                            lot.setConnaissement(cell.getStringCellValue());
-                        }
-                    } else if (cell.getStringCellValue().equals("N° LOT")) {
-                        cell = cellIterator.next();
-                        if (cell.getCellType() == CellType.NUMERIC)
-                        {
-                            System.out.println(" N° LOT "+cell.getNumericCellValue());
-                            lot.setNum_lot((int) cell.getNumericCellValue());
-                        }
-
-                    } else System.out.println(cell.getStringCellValue());
-
-
                 }
+                else if (cell.getStringCellValue().equals("BATCH NO.")) {
+                    cell = cellIterator.next();
+                    if (cell.getCellType() == CellType.STRING) {
+                        System.out.println(" BATCH NO. "+cell.getStringCellValue());
+                        lot.setNum_bach(cell.getStringCellValue());
+                    }
+                } else if (cell.getStringCellValue().equals("CONNAISSEMENT")) {
+                    cell = cellIterator.next();
+                    if (cell.getCellType() == CellType.STRING) {
+                        System.out.println(" CONNAISSEMENT "+cell.getStringCellValue());
+                        lot.setConnaissement(cell.getStringCellValue());
+                    }
+                } else if (cell.getStringCellValue().equals("N° LOT")) {
+                    cell = cellIterator.next();
+                    if (cell.getCellType() == CellType.NUMERIC)
+                    {
+                        System.out.println(" N° LOT "+cell.getNumericCellValue());
+                        lot.setNum_lot((int) cell.getNumericCellValue());
+                    }
+
+                } else System.out.println(cell.getStringCellValue());
 
 
             }
 
-                itr.next();
-               while (itr.hasNext())
-               {
-                   Row row = itr.next();
-                   Iterator<Cell> cellIterator = row.cellIterator();   //iterating over each column
-                   int i = 0;
-                   Vehicule vehicule = new Vehicule();
-                   while (cellIterator.hasNext()) {
-                       Cell cell = cellIterator.next();
-                       if(i==0)
-                       {
-                           if (cell.getCellType() == CellType.NUMERIC)
-                               vehicule.setOrdre((int)cell.getNumericCellValue());
-                       }
-                       else if(i==1) {
-                           if (cell.getCellType() == CellType.STRING)
-                               vehicule.setNum_Chassis(cell.getStringCellValue());
-                       }
-                       else if(i==2) {
-                           if (cell.getCellType() == CellType.STRING)
-                               vehicule.setNum_Engine(cell.getStringCellValue());
-                       }
-                       else if(i==3)
-                       {
-                           if (cell.getCellType() == CellType.STRING)
-                               vehicule.setCouleur(cell.getStringCellValue());
-                       }
 
-                                       i++;
-
-
-                   }
-                   vehicule.setLot(lot);
-                   vehicules.add(vehicule);
-
-
-               }
-
-            System.out.println(lot);
-
-
-
-
-
-        }  catch (IOException e) {
-            e.printStackTrace();
         }
 
-    }
+         itr.next();
+        while (itr.hasNext())
+        {
+            Row row = itr.next();
+            Iterator<Cell> cellIterator = row.cellIterator();   //iterating over each column
+            int i = 0;
+            Vehicule vehicule = new Vehicule();
+            while (cellIterator.hasNext()) {
+                Cell cell = cellIterator.next();
+                if(i==0)
+                {
+                    if (cell.getCellType() == CellType.NUMERIC)
+                        vehicule.setOrdre((int)cell.getNumericCellValue());
+                }
+                else if(i==1) {
+                    if (cell.getCellType() == CellType.STRING)
+                        vehicule.setNum_Chassis(cell.getStringCellValue());
+                }
+                else if(i==2) {
+                    if (cell.getCellType() == CellType.STRING)
+                        vehicule.setNum_Engine(cell.getStringCellValue());
+                }
+                else if(i==3)
+                {
+                    if (cell.getCellType() == CellType.STRING)
+                        vehicule.setCouleur(cell.getStringCellValue());
+                }
+
+                i++;
+
+
+            }
+            vehicule.setLot(lot);
+            vehicules.add(vehicule);
+
+
+        }
+
+        System.out.println(lot);
+
+
+
+
+
+         */
+
+
 
     /**********************Modification******************/
     //
@@ -308,7 +381,6 @@ public class UsineController {
     //Marque
     @PutMapping("/updateemarque")
     public ResponseEntity<Marque> updateMarque(@RequestBody Marque marque) {
-        System.out.println("***************" + marque);
         Marque updateMarque = marqueservice.updateMarque(marque);
         return new ResponseEntity<>(updateMarque, HttpStatus.OK);
     }
@@ -318,6 +390,7 @@ public class UsineController {
         Modele updatemodele = modeleservice.updateModele(modele);
         return new ResponseEntity<>(updatemodele, HttpStatus.OK);
     }
+    //Vehicule
     @PutMapping("/updatevehicule")
     public ResponseEntity<Vehicule> updateVehicule(@RequestBody Vehicule ve) {
         System.out.println(ve);
@@ -325,12 +398,41 @@ public class UsineController {
         System.out.println(updateve);
         return new ResponseEntity<>(updateve, HttpStatus.OK);
     }
+    //lot
     @PutMapping("/updatelot")
     public ResponseEntity<Lot> updateLot(@RequestBody Lot lot) {
         System.out.println(lot);
         Lot uplot = lotService.addLot(lot);
         return new ResponseEntity<>(uplot, HttpStatus.OK);
     }
+    //ME_Organisation
+    @PutMapping("/updateStepOfMarque")
+    public ResponseEntity<ME_Organisation> updateME_Orga(@RequestBody ME_Organisation ME)
+    {
+
+        if(stepservice.existBydes(ME.getStep().getDes()))
+        {
+            ME= new ME_Organisation();
+            ME.setOrdre(-1);
+        }
+        else if(me_orgaservice.exitByOrdre(ME.getOrdre()))
+        {
+            ME= new ME_Organisation();
+            ME.setOrdre(-2);
+        }
+        else
+        {
+            ME.setMarque(marqueservice.findMarqueById(ME.getId().getMarqueId()));
+            Step step = new Step();
+            step.setId(ME.getId().getStepId());
+            step.setDes(ME.getStep().getDes());
+            Step newstep = stepservice.updateStep(step);
+            ME.setStep(newstep);
+            ME_Organisation me = me_orgaservice.addEtapeMarque(ME);
+        }
+        return new ResponseEntity<>(ME, HttpStatus.CREATED);
+    }
+
 
     /************* la partie du suppression*******************/
     //
@@ -342,13 +444,13 @@ public class UsineController {
     }
     //Marque
     @DeleteMapping("/deletemarque/{id}")
-    public ResponseEntity<?> deleteMarque(@PathVariable("id") String id) {
+    public ResponseEntity<?> deleteMarque(@PathVariable("id") int id) {
        marqueservice.deleteMarque(id);
         return new ResponseEntity<>(HttpStatus.OK);
     }
     //Modele
     @DeleteMapping("/deletemodele/{id}")
-    public ResponseEntity<?> deleteModele(@PathVariable("id") String id) {
+    public ResponseEntity<?> deleteModele(@PathVariable("id") int id) {
         modeleservice.deleteModele(id);
         return new ResponseEntity<>(HttpStatus.OK);
     }
@@ -370,5 +472,12 @@ public class UsineController {
         lotService.deleteLot(id);
         return new ResponseEntity<>(HttpStatus.OK);
     }
-
+    @DeleteMapping("/deleteEtapeFROMmarque/{id}/{ij}")
+    public ResponseEntity<?> deleteEtapeFROMmarque(@PathVariable("id") int id, @PathVariable("ij") int ij)
+    {  KeyEtapeMarque key = new KeyEtapeMarque();
+        key.setStepId(id);
+        key.setMarqueId(ij);
+       me_orgaservice.deleteEtapeMarque(key);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
 }

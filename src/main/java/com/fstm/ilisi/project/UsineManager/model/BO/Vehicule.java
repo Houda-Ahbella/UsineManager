@@ -96,9 +96,7 @@ public class Vehicule implements Serializable {
         return Ordre;
     }
 
-    public void setOrdre(int ordre) {
-        Ordre = ordre;
-    }
+    public void setOrdre(int ordre) {  Ordre = ordre; }
    public static Comparator<Vehicule> ComparatorOrder = new Comparator<Vehicule>()
    {
        @Override

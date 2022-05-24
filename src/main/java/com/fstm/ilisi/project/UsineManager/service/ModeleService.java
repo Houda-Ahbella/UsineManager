@@ -17,8 +17,10 @@ public class ModeleService {
         this.modelerepo = modelerepo;
     }
 
-    public Modele addModele(Modele modele) {
-
+    public Modele addModele(Modele modele)
+    {
+       if(modelerepo.existsByDesignation(modele.getDesignation())==true)
+           return null;
         return modelerepo.save(modele);
     }
 
@@ -30,12 +32,16 @@ public class ModeleService {
         return modelerepo.save(modele);
     }
 
-    public Modele findModeleById(String id) {
+    public Modele findModeleById(int id) {
         return modelerepo.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("User by id " + id + " was not found"));
     }
+    public Modele findbydes(String des)
+    {
+        return modelerepo.findByDesignation(des);
+    }
 
-    public void deleteModele(String id){
+    public void deleteModele(int id){
         modelerepo.deleteById(id);
     }
 }
