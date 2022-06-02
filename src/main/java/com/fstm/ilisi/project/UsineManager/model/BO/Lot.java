@@ -14,13 +14,16 @@ import java.util.Set;
 @Table(name = "Lot")
 public class Lot implements Serializable {
     @Id
+    @Column(nullable = false)
     private int Num_lot;
-    @JsonIgnore
     @OneToMany(fetch = FetchType.LAZY,mappedBy = "lot")
     private Set<Vehicule> vehicules = new HashSet<>();
     private int Nombre_vehicules;
+    @Column(length = 50)
     private String Num_bach;
+    @Column(length = 20 )
     private String Connaissement;
+    @Column(length = 12)
     private String Date_Entree;
     public Lot() {
     }
@@ -68,7 +71,7 @@ public class Lot implements Serializable {
             v.setModele(modele);
     }
     }
-
+    @JsonIgnore
     public Set<Vehicule> getVehicules() {
         return vehicules;
     }

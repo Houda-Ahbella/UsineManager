@@ -96,7 +96,7 @@ public class ExcelReader {
                     if (i == 5)
                         //il faut faire les testes
                         if (cell.getCellType() == CellType.STRING)
-                            vehicule.setNum_Engine(cell.getStringCellValue());
+                            vehicule.setNumengine(cell.getStringCellValue());
                     if (i == 6)
                         if (cell.getCellType() == CellType.STRING)
                             color = cell.getStringCellValue();
@@ -155,7 +155,7 @@ public class ExcelReader {
             {   Vehicule v = new Vehicule();
                 v.setOrdre((int) row.getCell(0).getNumericCellValue());
                 v.setNum_Chassis( row.getCell(1).getStringCellValue());
-                v.setNum_Engine( row.getCell(2).getStringCellValue());
+                v.setNumengine( row.getCell(2).getStringCellValue());
                 v.setCouleur( row.getCell(3).getStringCellValue());
                 v.setLot(lot);
                 v.setModele(modele);

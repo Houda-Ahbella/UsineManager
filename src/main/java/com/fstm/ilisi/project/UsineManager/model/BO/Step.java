@@ -54,6 +54,18 @@ public class Step implements Serializable {
         this.Steps = ETAPES;
     }
 
+
+    @OneToMany(fetch = FetchType.LAZY,mappedBy = "step")
+    private Set<Fin_Etape> fin_etapes = new HashSet<>();
+
+    public Set<Fin_Etape> getFin_etapes() {
+        return fin_etapes;
+    }
+
+    public void setFin_etapes(Set<Fin_Etape> fin_etapes) {
+        this.fin_etapes = fin_etapes;
+    }
+
     @Override
     public String toString() {
         return "Step{" +

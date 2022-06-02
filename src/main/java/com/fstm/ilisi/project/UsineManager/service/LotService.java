@@ -18,9 +18,11 @@ public class LotService {
     public LotService(LotRepo lotrepo) {
         this.lotrepo = lotrepo;
     }
-    public Lot addLot(Lot lot) {
-
-        return lotrepo.save(lot);
+    public Lot addLot(Lot lot)
+    {
+        if(lotrepo.existsById(lot.getNum_lot()))
+            return null;
+          return lotrepo.save(lot);
     }
     public List<Lot> findAllLots() {
         return lotrepo.findAll();

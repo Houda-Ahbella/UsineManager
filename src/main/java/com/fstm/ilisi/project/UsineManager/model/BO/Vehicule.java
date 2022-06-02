@@ -1,25 +1,40 @@
 package com.fstm.ilisi.project.UsineManager.model.BO;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import javax.persistence.*;
 import java.io.Serializable;
-import java.util.Comparator;
-import java.util.Objects;
+import java.util.*;
 
 @Entity
 @Table(name = "Vehicule")
 public class Vehicule implements Serializable {
     @Id
+    @Column(length = 20 ,nullable = false)
     private String Num_Chassis;
-    private String Num_Engine;
+    @Column(length = 15 , unique = true , nullable = false)
+    private String numengine;
+    @Column(length = 10 )
     private String Couleur;
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "lot")
+    @JoinColumn(name = "lot",nullable = false)
     private Lot lot;
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "modele")
+    @JoinColumn(name = "modele",nullable = false)
     private Modele modele;
-    private int Ordre;
+    private int ordre;
 
+    @OneToMany(fetch = FetchType.LAZY,mappedBy = "vehicule")
+    private Set<Fin_Etape> Steps = new HashSet<>();
+
+    public List<Fin_Etape> getSteps()
+    {
+        List<Fin_Etape> stt = new ArrayList<>(Steps);
+        Collections.sort(stt, Fin_Etape.ComparatorOrder);
+        return stt;
+    }
+
+    public void setSteps(Set<Fin_Etape> steps) { Steps = steps;}
     public Modele getModele() {
         return modele;
     }
@@ -27,7 +42,6 @@ public class Vehicule implements Serializable {
     public void setModele(Modele marque) {
         this.modele = marque;
     }
-
 
     public Lot getLot() {
         return lot;
@@ -41,12 +55,12 @@ public class Vehicule implements Serializable {
         this.Num_Chassis = id;
     }
 
-    public String getNum_Engine() {
-        return Num_Engine;
+    public String getNumengine() {
+        return numengine;
     }
 
-    public void setNum_Engine(String tel) {
-        this.Num_Engine = tel;
+    public void setNumengine(String tel) {
+        this.numengine = tel;
     }
 
     public String getCouleur() {
@@ -60,7 +74,7 @@ public class Vehicule implements Serializable {
 
     public Vehicule(String id, String engine, String col, Modele m , Lot lot) {
         this.Num_Chassis = id;
-        this.Num_Engine = engine;
+        this.numengine = engine;
         this.Couleur = col;
         this.modele =m;
         this.lot=lot;
@@ -73,7 +87,7 @@ public class Vehicule implements Serializable {
     public String toString() {
         return
                 "numchassis=" + Num_Chassis +
-                        ", numEngine='" + Num_Engine + '\'' +
+                        ", numEngine='" + numengine + '\'' +
                         ", couleur='" + Couleur + '\'' +
                         ", modele ='" + modele + '\'' +
                      //   ", marque ='" + modele.getMarque() + '\'' +
@@ -93,16 +107,28 @@ public class Vehicule implements Serializable {
     }
 
     public int getOrdre() {
-        return Ordre;
+        return ordre;
     }
 
-    public void setOrdre(int ordre) {  Ordre = ordre; }
+    public void setOrdre(int ordre) {  this.ordre = ordre; }
    public static Comparator<Vehicule> ComparatorOrder = new Comparator<Vehicule>()
    {
        @Override
        public int compare(Vehicule v1, Vehicule v2)
        {
-           return (v1.Ordre- v2.Ordre);
+           return (v1.ordre - v2.ordre);
        }
    };
+
+    @OneToMany(fetch = FetchType.LAZY,mappedBy = "vehicule")
+    private Set<VehiculeProbleme> problemes = new HashSet<>();
+    public Set<VehiculeProbleme> getProblemes() {
+        return problemes;
+    }
+
+    public void setProblemes(Set<VehiculeProbleme> problemes) {
+        this.problemes = problemes;
+    }
+
+
 }
