@@ -28,6 +28,11 @@ public class StepService {
     public List<Step> findAllSteps() {
         return steprepo.findAll();
     }
+    public Step findbyde ( String des )
+    {
+        return steprepo.findByDes(des);
+    }
+
 
 
 

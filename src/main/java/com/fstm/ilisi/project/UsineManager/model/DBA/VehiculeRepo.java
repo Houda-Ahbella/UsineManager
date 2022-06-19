@@ -11,6 +11,7 @@ public interface VehiculeRepo extends JpaRepository<Vehicule,String> {
    // boolean existsByNum_EngineIsLike(String Num_Engine);
     boolean existsByOrdreAndLot(int ordre, Lot lot);
     boolean existsByNumengine(String num);
+
     List<Vehicule> findAllByLot(Lot lot);
     List<Vehicule> findAllByLotOrderByOrdre(Lot lot);
 }

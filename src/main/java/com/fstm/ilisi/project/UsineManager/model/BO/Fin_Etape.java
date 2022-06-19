@@ -2,12 +2,13 @@ package com.fstm.ilisi.project.UsineManager.model.BO;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import org.springframework.beans.factory.annotation.Value;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.Date;
+
 @JsonIgnoreProperties({"hibernateLazyInitializer"})
 @Entity
 @Table(name = "fin_etape")
@@ -23,9 +24,9 @@ public class Fin_Etape implements Serializable
     @MapsId("VehiculeId")
     @JoinColumn(name = "vehicule_id")
     Vehicule vehicule;
-    Date date_fin;
+    LocalDate datefin;
     @Column(length = 10 )
-    String Etat;
+    String etat;
     int ordre ;
     public Fin_Etape() {
     }
@@ -54,24 +55,25 @@ public class Fin_Etape implements Serializable
         this.vehicule = vehicule;
     }
 
-    public Date getDate_fin() {
-        return date_fin;
+    public LocalDate getDatefin() {
+        return datefin;
     }
 
-    public void setDate_fin(Date date_fin) {
-        this.date_fin = date_fin;
+    public void setDatefin(LocalDate date_fin) {
+        this.datefin = date_fin;
     }
 
     public String getEtat() {
-        return Etat;
+        return etat;
     }
 
     public void setEtat(String etat) {
-        Etat = etat;
+        this.etat = etat;
     }
 
     public String getNomStep()
     {
+        if(this.step==null) return "";
         return this.step.getDes();
     }
 
@@ -81,8 +83,8 @@ public class Fin_Etape implements Serializable
                 "key=" + key +
                 ", step=" + step +
                 ", vehicule=" + vehicule +
-                ", date_fin=" + date_fin +
-                ", Etat='" + Etat + '\'' +
+                ", date_fin=" + datefin +
+                ", Etat='" + etat + '\'' +
                 '}';
     }
 

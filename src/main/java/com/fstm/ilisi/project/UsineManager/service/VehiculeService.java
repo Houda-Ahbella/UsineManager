@@ -51,11 +51,15 @@ public class VehiculeService {
     }
 
     public Vehicule updateVehicule(Vehicule vehicule) {
-        if(vehiculerepo.existsByNumengine(vehicule.getNumengine()))
+        Vehicule v = vehiculerepo.getById(vehicule.getNum_Chassis());
+        if(!v.getNumengine().equals(vehicule.getNumengine()))
         {
-            Vehicule ve = new Vehicule();
-            ve.setOrdre(-3);
-            return ve;
+            if (vehiculerepo.existsByNumengine(vehicule.getNumengine())) {
+                Vehicule ve = new Vehicule();
+                ve.setOrdre(-3);
+                return ve;
+            }
+            return vehiculerepo.save(vehicule);
         }
         return vehiculerepo.save(vehicule);
     }

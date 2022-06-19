@@ -25,16 +25,16 @@ public class Vehicule implements Serializable {
     private int ordre;
 
     @OneToMany(fetch = FetchType.LAZY,mappedBy = "vehicule")
-    private Set<Fin_Etape> Steps = new HashSet<>();
+    private Set<Fin_Etape> roles = new HashSet<>();
 
     public List<Fin_Etape> getSteps()
     {
-        List<Fin_Etape> stt = new ArrayList<>(Steps);
+        List<Fin_Etape> stt = new ArrayList<>(roles);
         Collections.sort(stt, Fin_Etape.ComparatorOrder);
         return stt;
     }
 
-    public void setSteps(Set<Fin_Etape> steps) { Steps = steps;}
+    public void setSteps(Set<Fin_Etape> steps) { roles = steps;}
     public Modele getModele() {
         return modele;
     }

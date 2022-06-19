@@ -1,0 +1,7 @@
+package com.fstm.ilisi.project.UsineManager.model.DBA;
+
+import com.fstm.ilisi.project.UsineManager.model.BO.Role;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface RoleRepo extends JpaRepository<Role,Integer> {
+}

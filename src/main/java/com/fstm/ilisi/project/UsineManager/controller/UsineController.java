@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.*;
 
 
 import java.io.IOException;
+import java.text.ParseException;
+import java.time.LocalDate;
 import java.util.*;
 
 @RestController
@@ -23,7 +25,11 @@ public class UsineController {
     private final Fin_EtapeService fin_etapeservice;
     private final ProblemeQualiteService problemequaliteservice;
     private final VehiculeProblemeService vehiculeProblemeService;
-    public UsineController(EmployeeService employeeService, MarqueService marqueservice, ModeleService modeleservice, LotService lotService, VehiculeService vehiculeservice, StepService stepservice, ME_Organisation_Service me_orgaservice, Fin_EtapeService fin_etapeservice, ProblemeQualiteService problemequaliteservice, VehiculeProblemeService vehiculeProblemeService) {
+    private final UtlisateurService utilisateursevice;
+    private final CompteService compteService;
+    private final RoleutiliService roleutiliService;
+    private final RoleService roleservice;
+    public UsineController(EmployeeService employeeService, MarqueService marqueservice, ModeleService modeleservice, LotService lotService, VehiculeService vehiculeservice, StepService stepservice, ME_Organisation_Service me_orgaservice, Fin_EtapeService fin_etapeservice, ProblemeQualiteService problemequaliteservice, VehiculeProblemeService vehiculeProblemeService, UtlisateurService utilisateursevice, CompteService compteService, RoleutiliService roleutiliService, RoleutiliService roleservice, RoleService roleservice1) {
         this.employeeService = employeeService;
         this.marqueservice = marqueservice;
         this.modeleservice = modeleservice;
@@ -34,102 +40,126 @@ public class UsineController {
         this.fin_etapeservice = fin_etapeservice;
         this.problemequaliteservice = problemequaliteservice;
         this.vehiculeProblemeService = vehiculeProblemeService;
+        this.utilisateursevice = utilisateursevice;
+        this.compteService = compteService;
+        this.roleutiliService = roleutiliService;
+        this.roleservice = roleservice1;
     }
-        /***************Partie de selection de toutes ***************/
+
+    /***************Partie de selection de toutes ***************/
     @GetMapping("/allemployee")
-    public ResponseEntity<List<Employee>> getAllEmployees () {
+    public ResponseEntity<List<Employee>> getAllEmployees() {
         List<Employee> employees = employeeService.findAllEmployees();
         return new ResponseEntity<>(employees, HttpStatus.OK);
     }
+
     // Marques
     @GetMapping("/allmarques")
-    public ResponseEntity<List<Marque>> getAllMarques () {
+    public ResponseEntity<List<Marque>> getAllMarques() throws ParseException {
         List<Marque> marques = marqueservice.findAllMarques();
         return new ResponseEntity<>(marques, HttpStatus.OK);
     }
+
     // Modele
     @GetMapping("/allmodeles")
-    public ResponseEntity<List<Modele>> getAllModeles () {
+    public ResponseEntity<List<Modele>> getAllModeles() {
         List<Modele> models = modeleservice.findAllModeles();
         return new ResponseEntity<>(models, HttpStatus.OK);
     }
+
     // Models of marques
     @GetMapping("/allmodelesOfMarque/{id}")
-    public ResponseEntity<Set<Modele>> getModelsOfMarques (@PathVariable("id") int id) {
+    public ResponseEntity<Set<Modele>> getModelsOfMarques(@PathVariable("id") int id) {
         Marque marque = marqueservice.findMarqueById(id);
-        Set<Modele> models =  marque.getModeles();
+        Set<Modele> models = marque.getModeles();
         return new ResponseEntity<>(models, HttpStatus.OK);
     }
+
     // Vehicules of Lot
     @GetMapping("/allvehiculesOfLot/{id}")
-    public ResponseEntity<List<Vehicule>> getvehiculesOfLot(@PathVariable("id") int id)
-    {
+    public ResponseEntity<List<Vehicule>> getvehiculesOfLot(@PathVariable("id") int id) {
         Lot lot = lotService.findLotById(id);
         List<Vehicule> OrderVehicules = new ArrayList<>(lot.getVehicules());
         Collections.sort(OrderVehicules, Vehicule.ComparatorOrder);
-        return new ResponseEntity<>(OrderVehicules,HttpStatus.OK);
+        return new ResponseEntity<>(OrderVehicules, HttpStatus.OK);
 
     }
+
     @GetMapping("/allVehiculesbloquéOfLot/{id}")
-    public ResponseEntity<List<Vehicule>> allVehiculesbloquéOfLot(@PathVariable("id") int id)
-    {
-      List<Vehicule> ves = vehiculeservice.findAllBloque(lotService.findLotById(id));
-      return new ResponseEntity<>(ves,HttpStatus.OK);
+    public ResponseEntity<List<Vehicule>> allVehiculesbloquéOfLot(@PathVariable("id") int id) {
+        List<Vehicule> ves = vehiculeservice.findAllBloque(lotService.findLotById(id));
+        return new ResponseEntity<>(ves, HttpStatus.OK);
     }
+
+
     // vehicules
     @GetMapping("/allvehicules")
-    public ResponseEntity<List<Vehicule>> getAllVehicules () {
+    public ResponseEntity<List<Vehicule>> getAllVehicules() {
         List<Vehicule> vehicules = vehiculeservice.findAllVehicules();
         return new ResponseEntity<>(vehicules, HttpStatus.OK);
     }
+
     // lots
     @GetMapping("/allLot")
-    public ResponseEntity<List<Lot>> getAllLots () {
+    public ResponseEntity<List<Lot>> getAllLots() {
         List<Lot> lots = lotService.findAllLots();
         Collections.sort(lots, Lot.ComparatorOrder);
         Collections.reverse(lots);
         return new ResponseEntity<>(lots, HttpStatus.OK);
     }
+
     // Etapes
     @GetMapping("/allEtapes")
-    public ResponseEntity<List<Step>> getAlletapes () {
+    public ResponseEntity<List<Step>> getAlletapes() {
         List<Step> steps = stepservice.findAllSteps();
         return new ResponseEntity<>(steps, HttpStatus.OK);
     }
+
     @GetMapping("/allOrga")
-    public ResponseEntity<List<ME_Organisation>> getAllORGA () {
+    public ResponseEntity<List<ME_Organisation>> getAllORGA() {
         List<ME_Organisation> em = me_orgaservice.findAllEtapesMarque();
         Collections.sort(em, ME_Organisation.ComparatorOrder);
         Collections.reverse(em);
         return new ResponseEntity<>(em, HttpStatus.OK);
     }
+
     @GetMapping("/allStepsofmarque/{id}")
-    public ResponseEntity<Set<ME_Organisation>> getAllStepsOfmarque (@PathVariable("id") int id) {
+    public ResponseEntity<Set<ME_Organisation>> getAllStepsOfmarque(@PathVariable("id") int id) {
         Set<ME_Organisation> em = marqueservice.findMarqueById(id).getSteps();
         return new ResponseEntity<>(em, HttpStatus.OK);
     }
 
     @GetMapping("/allEtapesNotINmarque/{id}")
-    public  ResponseEntity<List<Step>> getallEtapesNotINmarque (@PathVariable("id") int id)
-    {
+    public ResponseEntity<List<Step>> getallEtapesNotINmarque(@PathVariable("id") int id) {
         List<Step> steps = stepservice.findAllSteps();
         Set<ME_Organisation> marquestep = marqueservice.findMarqueById(id).getSteps();
 
 
-            for (ME_Organisation ME : marquestep)
-            {
-                for(int i=0 ; i< steps.size() ; i++) {
-                    if (ME.getId().getStepId() == steps.get(i).getId()) {
-                        steps.remove(steps.get(i));
-                    }
+        for (ME_Organisation ME : marquestep) {
+            for (int i = 0; i < steps.size(); i++) {
+                if (ME.getId().getStepId() == steps.get(i).getId()) {
+                    steps.remove(steps.get(i));
                 }
-
             }
 
-
+        }
 
 
         return new ResponseEntity<>(steps, HttpStatus.OK);
+
+    }
+
+    @GetMapping("/allEtapeOfvehiculewithetet/{id}")
+    public ResponseEntity<List<Fin_Etape>> getallEtapeOfvehiculewithetet(@PathVariable("id") String id)
+    {
+        Vehicule ve = vehiculeservice.findVehiculeById(id);
+        Collection<String> etats = new ArrayList<>();
+        etats.add("Fini"); etats.add("Bloqué");
+
+        List<Fin_Etape> list1= fin_etapeservice.findybystepandetatandve(ve, etats);
+        Collections.sort(list1, Fin_Etape.ComparatorOrder);
+        System.out.println(list1);
+        return  new ResponseEntity<>(list1, HttpStatus.OK);
 
     }
     @GetMapping("/allFinEtape")
@@ -146,12 +176,56 @@ public class UsineController {
         return new ResponseEntity<>(prbs,HttpStatus.OK);
 
     }
+    @GetMapping("/allProblemesOfLot/{lot}")
+    public ResponseEntity<List<Probleme_qualite>> allProblemesOfLot(@PathVariable("lot") int lot )
+    {
+        Lot l = lotService.findLotById(lot);
+        List<Probleme_qualite> prbs = new ArrayList<>();
+         Set<Vehicule> vehicules = l.getVehicules();
+         for (Vehicule v: vehicules)
+         {
+             for(VehiculeProbleme p : v.getProblemes())
+             {
+                 Probleme_qualite q = problemequaliteservice.getbyId(p.getKey().getProblemeId());
+
+                 if(prbs.contains(q)){ q= prbs.get(prbs.indexOf(q)); q.setCount(q.getCount()+1); }
+                 else { q.setCount(1); prbs.add(q);}
+             }
+
+         }
+        return new ResponseEntity<>(prbs,HttpStatus.OK);
+
+    }
     @GetMapping("/allVehiculesProblemes")
     public ResponseEntity<List<VehiculeProbleme>> allVehiculesProblemes()
     {
         List<VehiculeProbleme> prbs = vehiculeProblemeService.findall();
         return new ResponseEntity<>(prbs,HttpStatus.OK);
     }
+    @GetMapping("/StatistiqueQuotidienne")
+    public ResponseEntity<List<Integer>> StatistiqueQuotidienne()
+    {   List<Integer> l = new ArrayList();
+        Step steplivre = stepservice.findbyde("LIVRAISON");
+        int livrees = fin_etapeservice.count_today_step(steplivre,"Fini",LocalDate.now() );
+        int bloque = fin_etapeservice.count_today_etat("Bloqué" , LocalDate.now());
+        int en =  fin_etapeservice.count_total_etat("En cours") - fin_etapeservice.count_total_etat("Bloqué")
+                - fin_etapeservice.countByStepAndEtat(steplivre,"Fini");
+        l.add(livrees); l.add(bloque); l.add(en);
+        return new ResponseEntity<List<Integer>>(l, HttpStatus.OK);
+    }
+    @GetMapping("/Statistiqueparmonth")
+    public ResponseEntity<List<Integer>> Statistiqueparmonth()
+    {
+        Step step = stepservice.findbyde("LIVRAISON");
+        List<Integer> i = fin_etapeservice.Count_livree_by_month(step,"Fini");
+        return new ResponseEntity<>(i,HttpStatus.OK);
+    }
+     @GetMapping("/Allutilisateur")
+     public ResponseEntity<List<Utilisateur>> Allutilisateur()
+     {
+         List<Utilisateur> utilisateurs = utilisateursevice.findAll();
+         return new ResponseEntity<>(utilisateurs,HttpStatus.OK);
+     }
      /*************************Partie de recherche ***********************************/
      //
     @GetMapping("/findemployee/{id}")
@@ -185,6 +259,29 @@ public class UsineController {
         List<Lot> lots = new ArrayList<Lot>();
         lots.add(lot);
         return new ResponseEntity<>(lots, HttpStatus.OK);
+    }
+    @PostMapping("/findUtilisateur")
+    public ResponseEntity<Utilisateur> findUtilisateur(@RequestBody Compte id)
+    {
+
+        Utilisateur u = compteService.FindByid(id);
+        return new ResponseEntity<>(u,HttpStatus.OK);
+    }
+    @GetMapping("/findUtilisateurbyid/{id}")
+    public ResponseEntity<Utilisateur> findUtilisateurbyid(@PathVariable("id") int id)
+    {
+
+        Utilisateur u = utilisateursevice.findbyid(id);
+
+        return new ResponseEntity<>(u,HttpStatus.OK);
+    }
+    @GetMapping("/findUtilisateurbyNom/{id}")
+    public ResponseEntity<List<Utilisateur>> ffindUtilisateurbyNom(@PathVariable("id") String id)
+    {
+
+        List<Utilisateur> u = utilisateursevice.findbynom(id);
+
+        return new ResponseEntity<>(u,HttpStatus.OK);
     }
 
     /********************Partie d'ajout ************************/
@@ -223,6 +320,7 @@ public class UsineController {
     // Lot
     @PostMapping("/addlot")
     public ResponseEntity<Lot> addlot(@RequestBody List<Vehicule> vehicules) {
+        System.out.println(vehicules);
         Lot newlot = lotService.addLot(vehicules.get(0).getLot());
          if(newlot==null)
          {
@@ -354,6 +452,40 @@ public class UsineController {
        VehiculeProbleme p = vehiculeProblemeService.add(prb);
        return  new ResponseEntity<>(p,HttpStatus.CREATED);
    }
+   @PostMapping("/addUtilisateur")
+   public ResponseEntity<Utilisateur> addUtilisateur(@RequestBody Utilisateur u)
+   {
+      Utilisateur a = new Utilisateur();
+      a.setNom(u.getNom());
+      a.setPrenom(u.getPrenom());
+      Utilisateur utl = utilisateursevice.add(a);
+      if(utl.getId()>0)
+      {
+          Compte c = new Compte();
+          c.setEmail(u.getCompte().getEmail());
+          c.setPassword(u.getCompte().getPassword());
+          c.setUtilisateur(utl);
+          Compte c1 = compteService.add(c);
+          if(c1.getEmail().equals(""))
+          {
+              utilisateursevice.delete(utl);
+              utl.setId(-2);
+
+          }
+          else
+          {
+              for (Roleutili r : u.getRoles())
+              {
+                  r.getKey().setUtlisateurId(utl.getId());
+                  r.setRole(roleservice.find(r.getKey().getRoleId()));
+                  r.setUtilisateur(utl);
+                  roleutiliService.add(r);
+              }
+
+          }
+      }
+        return new ResponseEntity<>(utl,HttpStatus.CREATED);
+   }
     /**********************Modification******************/
     //
     @PutMapping("/updateemployee")
@@ -378,7 +510,6 @@ public class UsineController {
     public ResponseEntity<Vehicule> updateVehicule(@RequestBody Vehicule ve) {
         System.out.println(ve);
         Vehicule updateve = vehiculeservice.updateVehicule(ve);
-        System.out.println(updateve);
         return new ResponseEntity<>(updateve, HttpStatus.OK);
     }
     //lot
@@ -419,9 +550,10 @@ public class UsineController {
         Vehicule ve = vehiculeservice.findVehiculeById(finetape.getKey().getVehiculeId());
         finetape.setStep(step);
         finetape.setVehicule(ve);
+
         Fin_Etape fe = fin_etapeservice.update(finetape);
-        System.out.println(fe);
-        return  new ResponseEntity<>(fe,HttpStatus.CREATED);
+           System.out.println(fe);
+        return  new ResponseEntity<>(fe,HttpStatus.OK);
     }
     @PutMapping("/UpdateProbleme")
     public ResponseEntity<Probleme_qualite> UpdateProbleme(@RequestBody Probleme_qualite pq)
@@ -429,7 +561,37 @@ public class UsineController {
         Probleme_qualite prbq = problemequaliteservice.update(pq);
         return new ResponseEntity<>(prbq,HttpStatus.CREATED);
     }
+    @PutMapping("/UpdateUtilisateur")
+    public ResponseEntity<Utilisateur> UpdateUtilisateur(@RequestBody Utilisateur u) {
 
+        Utilisateur a = utilisateursevice.findbyid(u.getId());
+        if(!utilisateursevice.exitsbynomandorenom(u.getNom(),u.getPrenom()))
+        {
+            a.setNom(u.getNom());
+            a.setPrenom(u.getPrenom());
+        }
+
+        Compte c = compteService.findbyUser(a);
+
+       if(!c.getPassword().equals(u.getCompte().getPassword()))
+       {
+           c.setPassword(u.getCompte().getPassword());
+
+
+       }
+       if(!c.getEmail().equals(u.getCompte().getEmail()))
+       {
+           if(!compteService.existbyid(u.getCompte().getEmail()))
+           c.setEmail(u.getCompte().getEmail());
+
+
+       }
+        compteService.save(c);
+        a.setCompte(c);
+        Utilisateur utl = utilisateursevice.save(a);
+        return new ResponseEntity<>(utl,HttpStatus.CREATED);
+
+    }
     /************* la partie du suppression*******************/
     //
     @DeleteMapping("/deleteemployee/{id}")
@@ -473,7 +635,10 @@ public class UsineController {
         {
             for(Fin_Etape e : v.getSteps())
                 fin_etapeservice.delete(e);
-            vehiculeservice.deleteVehicule(v.getNum_Chassis());
+            for(VehiculeProbleme p : v.getProblemes())
+                vehiculeProblemeService.delete(p.getKey());
+                 vehiculeservice.deleteVehicule(v.getNum_Chassis());
+
 
         }
         lotService.deleteLot(id);
@@ -497,4 +662,22 @@ public class UsineController {
         vehiculeProblemeService.delete(key);
         return new ResponseEntity<>(HttpStatus.OK);
     }
+    @DeleteMapping("/DeleteUtilisateur/{id}")
+    public ResponseEntity<?> DeleteUtilisateur(@PathVariable("id") int id)
+    {
+        Utilisateur u = utilisateursevice.findbyid(id);
+        Compte c = compteService.findbyUser(u);
+
+        for(Roleutili r : u.getRoles())
+        {
+            Keyroleutili ke = new Keyroleutili();
+            ke.setRoleId(r.getRole().getId());
+            ke.setUtlisateurId(u.getId());
+            roleutiliService.delete(ke);
+        }
+        compteService.delete(c);
+        utilisateursevice.delete(u);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
 }
