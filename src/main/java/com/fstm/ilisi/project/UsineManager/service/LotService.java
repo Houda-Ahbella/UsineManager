@@ -33,10 +33,14 @@ public class LotService {
     }
 
     public Lot findLotById(int id) {
+
         return lotrepo.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("User by id " + id + " was not found"));
     }
-
+    public Boolean existbyid(int id)
+    {
+        return lotrepo.existsById(id);
+    }
     public void deleteLot(int id){
         lotrepo.deleteById(id);
     }

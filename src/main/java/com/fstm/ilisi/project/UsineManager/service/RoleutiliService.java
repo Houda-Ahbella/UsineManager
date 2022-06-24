@@ -24,4 +24,12 @@ public class RoleutiliService {
     {
         roleutiliRepo.save(r);
     }
+    public Roleutili findbykey(Keyroleutili k)
+    {
+        return roleutiliRepo.findByKey(k);
+    }
+    public Boolean existbyket(Keyroleutili k)
+    {
+        return roleutiliRepo.existsByKey(k);
+    }
 }

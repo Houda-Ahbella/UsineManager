@@ -254,11 +254,11 @@ public class UsineController {
     }
     //Lot
     @GetMapping("/findlot/{id}")
-    public ResponseEntity<List<Lot>> getLotById (@PathVariable("id") int id) {
-        Lot lot = lotService.findLotById(id);
-        List<Lot> lots = new ArrayList<Lot>();
-        lots.add(lot);
-        return new ResponseEntity<>(lots, HttpStatus.OK);
+    public ResponseEntity<Lot> getLotById (@PathVariable("id") int id) {
+        Lot lot = new Lot();
+        if(lotService.existbyid(id))  lot = lotService.findLotById(id);
+       else  lot.setNum_lot(-1);
+        return new ResponseEntity<>(lot, HttpStatus.OK);
     }
     @PostMapping("/findUtilisateur")
     public ResponseEntity<Utilisateur> findUtilisateur(@RequestBody Compte id)
@@ -309,6 +309,7 @@ public class UsineController {
     // Vehicule
     @PostMapping("/addvehicule")
     public ResponseEntity<Vehicule> addVehicule(@RequestBody Vehicule ve) {
+        System.out.println(ve);
         Lot lot = lotService.findLotById(ve.getLot().getNum_lot());
         lot.setNombre_vehicules(lot.getNombre_vehicules()+1);
         Vehicule newVE = vehiculeservice.addVehicule(ve);
@@ -591,6 +592,35 @@ public class UsineController {
         Utilisateur utl = utilisateursevice.save(a);
         return new ResponseEntity<>(utl,HttpStatus.CREATED);
 
+    }
+    @PutMapping("/UpdateRoleofutilisateur")
+    public  ResponseEntity<?> UpdateRoleofutilisateur(@RequestBody List<Integer> u)
+    {
+        System.out.println(u);
+        Utilisateur utl = utilisateursevice.findbyid(u.get(0));
+        for (int i =1; i<u.size();i++)
+        {
+            Keyroleutili k = new Keyroleutili();
+            k.setUtlisateurId(utl.getId());
+            k.setRoleId(i);
+            if(roleutiliService.existbyket(k))
+            {
+                if(u.get(i)==0) roleutiliService.delete(k);
+            }
+            else
+            {
+                if(u.get(i)==1)
+                {
+                    Roleutili rol = new Roleutili();
+                    rol.setKey(k);
+                    rol.setRole(roleservice.find(i));
+                    rol.setUtilisateur(utl);
+                    roleutiliService.add(rol);
+                }
+
+            }
+        }
+        return new ResponseEntity<>(HttpStatus.OK);
     }
     /************* la partie du suppression*******************/
     //
